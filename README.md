@@ -1,4 +1,4 @@
-# hairy-avenger
+# Crop Agent
 
 importImage est une application universelle iOS(8.0) permettant de recadrer les images stockées dans "Photos" pour ensuite les imprimer ou les sauvegarder dans "Photos".
 Après avoir choisi la photo et un format de sortie, l'utilisateur peut appliquer les transformations geométriques habituelles à l'image, taille, position, rotation.
