@@ -13,7 +13,6 @@
 		30CE32451B1DE8B5006515B6 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30CE32371B1DE8B5006515B6 /* Format.swift */; };
 		30CE32461B1DE8B5006515B6 /* FormatTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30CE32381B1DE8B5006515B6 /* FormatTableCell.swift */; };
 		30CE32471B1DE8B5006515B6 /* FormatTableVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30CE32391B1DE8B5006515B6 /* FormatTableVC.swift */; };
-		30CE32481B1DE8B5006515B6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 30CE323A1B1DE8B5006515B6 /* Main.storyboard */; };
 		30CE32491B1DE8B5006515B6 /* MainVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30CE323B1B1DE8B5006515B6 /* MainVC.swift */; };
 		30CE324A1B1DE8B5006515B6 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30CE323C1B1DE8B5006515B6 /* MainView.swift */; };
 		30CE324B1B1DE8B5006515B6 /* NavController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30CE323D1B1DE8B5006515B6 /* NavController.swift */; };
@@ -92,6 +91,7 @@
 		30CE33631B1DF9B7006515B6 /* top.png in Resources */ = {isa = PBXBuildFile; fileRef = 30CE331F1B1DF9B7006515B6 /* top.png */; };
 		30CE33641B1DF9B7006515B6 /* top@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 30CE33201B1DF9B7006515B6 /* top@2x.png */; };
 		30CE33651B1DF9B7006515B6 /* top@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 30CE33211B1DF9B7006515B6 /* top@3x.png */; };
+		30CE336B1B1E00A2006515B6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 30CE336A1B1E00A2006515B6 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,7 +115,6 @@
 		30CE32371B1DE8B5006515B6 /* Format.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		30CE32381B1DE8B5006515B6 /* FormatTableCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FormatTableCell.swift; sourceTree = "<group>"; };
 		30CE32391B1DE8B5006515B6 /* FormatTableVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FormatTableVC.swift; sourceTree = "<group>"; };
-		30CE323A1B1DE8B5006515B6 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		30CE323B1B1DE8B5006515B6 /* MainVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainVC.swift; sourceTree = "<group>"; };
 		30CE323C1B1DE8B5006515B6 /* MainView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		30CE323D1B1DE8B5006515B6 /* NavController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NavController.swift; sourceTree = "<group>"; };
@@ -194,6 +193,7 @@
 		30CE331F1B1DF9B7006515B6 /* top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = top.png; sourceTree = "<group>"; };
 		30CE33201B1DF9B7006515B6 /* top@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "top@2x.png"; sourceTree = "<group>"; };
 		30CE33211B1DF9B7006515B6 /* top@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "top@3x.png"; sourceTree = "<group>"; };
+		30CE336A1B1E00A2006515B6 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -235,12 +235,12 @@
 		30CE32141B1DE7BB006515B6 /* CropAgent */ = {
 			isa = PBXGroup;
 			children = (
+				30CE336A1B1E00A2006515B6 /* Main.storyboard */,
 				30CE32DC1B1DE959006515B6 /* Images.xcassets */,
 				30CE32531B1DE8D4006515B6 /* images */,
 				30CE32371B1DE8B5006515B6 /* Format.swift */,
 				30CE32381B1DE8B5006515B6 /* FormatTableCell.swift */,
 				30CE32391B1DE8B5006515B6 /* FormatTableVC.swift */,
-				30CE323A1B1DE8B5006515B6 /* Main.storyboard */,
 				30CE323B1B1DE8B5006515B6 /* MainVC.swift */,
 				30CE323C1B1DE8B5006515B6 /* MainView.swift */,
 				30CE323D1B1DE8B5006515B6 /* NavController.swift */,
@@ -440,11 +440,11 @@
 			files = (
 				30CE33621B1DF9B7006515B6 /* right@3x.png in Resources */,
 				30CE33231B1DF9B7006515B6 /* a5.jpg in Resources */,
-				30CE32481B1DE8B5006515B6 /* Main.storyboard in Resources */,
 				30CE33421B1DF9B7006515B6 /* crop-area.png in Resources */,
 				30CE33561B1DF9B7006515B6 /* lock-off-7@2x.png in Resources */,
 				30CE33291B1DF9B7006515B6 /* arrow-out.png in Resources */,
 				30CE33451B1DF9B7006515B6 /* document-save.png in Resources */,
+				30CE336B1B1E00A2006515B6 /* Main.storyboard in Resources */,
 				30CE33441B1DF9B7006515B6 /* crop-area@3x.png in Resources */,
 				30CE33431B1DF9B7006515B6 /* crop-area@2x.png in Resources */,
 				30CE33281B1DF9B7006515B6 /* a10.jpg in Resources */,
