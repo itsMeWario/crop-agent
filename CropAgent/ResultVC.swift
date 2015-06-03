@@ -16,6 +16,9 @@ class ResultVC: UIViewController, UIPrintInteractionControllerDelegate, UIPrinte
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    @IBOutlet weak var lowResPreviewContainer: UIView!
+    var lowResPreview : UIView?
+    
     var  resultImageSize : CGSize?
     var  contentHasBeenSaved = false
     
@@ -27,6 +30,7 @@ class ResultVC: UIViewController, UIPrintInteractionControllerDelegate, UIPrinte
         navigationItem.setLeftBarButtonItem(UIBarButtonItem(image: UIImage(named: "backBtn"), style: UIBarButtonItemStyle.Plain, target: self, action: "closeMe:"), animated: false)
         
         loadToolBar()
+        lowResPreviewContainer.addSubview(lowResPreview!)
         
         activityIndicator.hidden = true
     }
@@ -99,6 +103,8 @@ class ResultVC: UIViewController, UIPrintInteractionControllerDelegate, UIPrinte
         imageContainerHeight.constant = resultImageSize!.height
         imageView.layoutIfNeeded()
     }
+    
+     
     
     override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)

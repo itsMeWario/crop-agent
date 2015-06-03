@@ -106,6 +106,19 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         let resultVC = self.storyboard?.instantiateViewControllerWithIdentifier("resultvc") as! ResultVC
         resultVC.resultImageSize = mainView.finalView.frame.size
         
+        let imageViewInFinalview = mainView.finalView.convertRect(mainView.tiledImageView.tiledView!.frame, fromView: mainView.tiledImageView.tiledView!.superview)
+        let finalViewInMainview =  mainView.convertRect(mainView.finalView.frame, fromView: mainView.finalView.superview)
+        
+        let tiledViewSnapshot = mainView.tiledImageView.tiledView!.snapshotViewAfterScreenUpdates(true)
+        tiledViewSnapshot.frame.origin = imageViewInFinalview.origin
+        mainView.borderView.hidden = true
+        mainView.finalView.addSubview(tiledViewSnapshot)
+        let resultSnapshot = mainView.finalView.snapshotViewAfterScreenUpdates(true)
+        tiledViewSnapshot.removeFromSuperview()
+        mainView.borderView.hidden = false
+        
+        resultVC.lowResPreview = resultSnapshot
+        
         //ouverture
         self.navigationController?.pushViewController(resultVC, animated: true)
         

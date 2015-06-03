@@ -238,6 +238,10 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="f74-gV-OhR">
                                 <rect key="frame" x="150" y="150" width="300" height="300"/>
                                 <subviews>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="fnl-c9-zQw">
+                                        <rect key="frame" x="0.0" y="0.0" width="300" height="300"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    </view>
                                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="8BI-CV-0b7">
                                         <rect key="frame" x="0.0" y="0.0" width="300" height="300"/>
                                     </imageView>
@@ -249,7 +253,11 @@
                                     <constraint firstItem="8BI-CV-0b7" firstAttribute="width" secondItem="f74-gV-OhR" secondAttribute="width" id="JhA-wL-Ejm"/>
                                     <constraint firstItem="8BI-CV-0b7" firstAttribute="height" secondItem="f74-gV-OhR" secondAttribute="height" id="MCM-ym-BRj"/>
                                     <constraint firstAttribute="height" constant="300" id="PIl-gD-hMV"/>
+                                    <constraint firstAttribute="height" secondItem="fnl-c9-zQw" secondAttribute="height" id="TEb-9g-PxZ"/>
+                                    <constraint firstAttribute="centerY" secondItem="fnl-c9-zQw" secondAttribute="centerY" id="TfL-Pf-bCI"/>
                                     <constraint firstAttribute="centerY" secondItem="8BI-CV-0b7" secondAttribute="centerY" id="d1M-p6-OyH"/>
+                                    <constraint firstAttribute="width" secondItem="fnl-c9-zQw" secondAttribute="width" id="rId-f0-jKg"/>
+                                    <constraint firstAttribute="centerX" secondItem="fnl-c9-zQw" secondAttribute="centerX" id="ysB-vd-5sz"/>
                                 </constraints>
                             </view>
                             <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="9uY-HX-gEd">
@@ -270,6 +278,7 @@
                         <outlet property="imageContainerHeight" destination="PIl-gD-hMV" id="FKW-Ze-Z82"/>
                         <outlet property="imageContainerWidth" destination="IP7-xA-AJl" id="RLB-Z7-L4S"/>
                         <outlet property="imageView" destination="8BI-CV-0b7" id="NtT-6j-9cW"/>
+                        <outlet property="lowResPreviewContainer" destination="fnl-c9-zQw" id="Qkj-6o-rK8"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Roz-cK-7Xa" userLabel="First Responder" sceneMemberID="firstResponder"/>
