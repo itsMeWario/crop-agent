@@ -62,6 +62,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         
         //récupération du nom de l'asset
         let asset = SessionData.sharedData.getCopy().imageAsset!
+        
         requestAssetName(asset, cbk: {
             self.navigationController?.toolbarHidden = false
             self.navigationController?.hidesBarsOnTap = true
@@ -235,24 +236,22 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     //requete le nom de l'asset
     func requestAssetName(asset : PHAsset, cbk : (()->Void)?){
         
-        if let asMainVC = childViewControllers.first as? MainVC{
+        let manager = PHImageManager.defaultManager()
+        let options = PHImageRequestOptions()
+        options.synchronous = false
+        
+        manager.requestImageDataForAsset(asset, options: options, resultHandler: { (data, dataUTI, orientation, infos) -> Void in
             
-            let manager = PHImageManager.defaultManager()
-            let options = PHImageRequestOptions()
-            options.synchronous = true
-            
-            manager.requestImageDataForAsset(asset, options: options, resultHandler: { (data, dataUTI, orientation, infos) -> Void in
+            if let infos = infos, let asNSURL = infos["PHImageFileURLKey"] as? NSURL, let elts = asNSURL.pathComponents as? [String] where elts.last != nil && elts.last != ""{
                 
-                if let infos = infos, let asNSURL = infos["PHImageFileURLKey"] as? NSURL, let elts = asNSURL.pathComponents as? [String] where elts.last != nil && elts.last != ""{
-                    
-                    self.imageTitle = elts.last!
-                    
-                    if cbk != nil{
-                        cbk!()
-                    }
+                self.navigationItem.title = elts.last!
+                self.imageTitle = elts.last!
+                
+                if cbk != nil{
+                    cbk!()
                 }
-            })
-        }
+            }
+        })
     }
 
     
@@ -788,6 +787,8 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         
         //demande une mise à jour du layout de mainView
         mainView.updateViewerLayout(view.bounds, forSizeTransition : forSizeTransition)
+        self.mainView.scrollView.pinchGestureRecognizer?.enabled = appContextId == 1 ? true : false
+        
        
     }
 
