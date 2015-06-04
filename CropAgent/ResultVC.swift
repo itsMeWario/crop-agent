@@ -93,7 +93,7 @@ class ResultVC: UIViewController, UIPrintInteractionControllerDelegate, UIPrinte
         self.imageView.layer.opacity = 0
         imageView.image = image
         
-        UIView.animateWithDuration(1, animations: { () -> Void in
+        UIView.animateWithDuration(0.3, animations: { () -> Void in
             self.imageView.layer.opacity = 1
         })
     }
