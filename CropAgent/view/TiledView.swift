@@ -17,16 +17,13 @@ class TiledView: UIView {
     var trailingConstraint: NSLayoutConstraint!
     
     var image : UIImage?
+    var maskingView : UIImageView?
     
-    
+    var compteur = 0
     
     var asset : PHAsset?
     var imageTiles = [[CGImage]]()
     
-    
-    //var manager : PHImageManager?
-    
-        
     var rotationTransform = CGAffineTransformIdentity
     let tileSize = CGSize(width: 256, height: 256)
     var tilesCount = 0
@@ -59,22 +56,46 @@ class TiledView: UIView {
     convenience init(frame:CGRect, image : UIImage){
         self.init(frame : frame)
         self.image = image
+        
+        //ajout d'une vue au premier plan pour masker l'affichages des tiles
+        maskingView = UIImageView(image: image)
+        maskingView?.center = center
+        addSubview(maskingView!)
+    }
+    
+    override func layoutSubviews() {
+         compteur = 0
     }
     
 
     required init(coder aDecoder: NSCoder) {
-        
         super.init(coder: aDecoder)
     }
     
+    
+    
     //tracé des tiles
     override func drawLayer(layer: CALayer!, inContext ctx: CGContext!) {
-        
         
         if let asImage = image{
             
             let contextRect  = CGContextGetClipBoundingBox(ctx)
             let contextScale = CGContextGetCTM(ctx).a
+            let tileSize = CGSize(width: (layer as! CATiledLayer).tileSize.width/contextScale, height: (layer as! CATiledLayer).tileSize.height/contextScale)
+            let screenSize = UIScreen.mainScreen().bounds.size
+            
+            let nbTilesPerRow : CGFloat
+            let nbRows : CGFloat
+            
+            if CGRectContainsRect(UIScreen.mainScreen().bounds, bounds){
+                nbTilesPerRow = ceil(bounds.width / tileSize.width)
+                nbRows = ceil(bounds.height / tileSize.height)
+            }else{
+                nbTilesPerRow = ceil(screenSize.width / tileSize.width) + 1.0
+                nbRows = ceil(screenSize.height / tileSize.height) + 1.0
+            }
+            
+            compteur++
             
             CGContextTranslateCTM(ctx, asImage.size.width * 0.5, asImage.size.height * 0.5)
             CGContextScaleCTM(ctx, 1, -1)
@@ -86,7 +107,18 @@ class TiledView: UIView {
             
             CGContextDrawImage(ctx, imageRect , asImage.CGImage)
             
+            //dernière tile
+            if compteur == Int(nbRows*nbTilesPerRow){
+                
+                //suppression de la vue masquant l'afficha des tiles
+                UIView.animateWithDuration(0.5, animations: { () -> Void in
+                    self.maskingView?.layer.opacity = 0
+                }, completion: { (finished) -> Void in
+                    
+                    
+                    self.maskingView?.removeFromSuperview()
+                })
+            }
         }
-
     }
 }

@@ -248,51 +248,7 @@ class MainView: UIView {
         
         if let asView = alignmentView{
             
-//            let tmpView : UIView?
-//            
-//            if asView.isEqual(self.verticalAlignmentView){
-//                tmpView = self.verticalAlignmentView
-//            }else{
-//                tmpView = self.horizontalAlignmentView
-//            }
-//            
-//            UIView.animateWithDuration(0.1, animations: { () -> Void in
-//                
-//                tmpView!.transform = CGAffineTransformMakeScale(10, 10)
-//                
-//            }, completion: { (finished) -> Void in
-//                
-//                UIView.animateWithDuration(0.1, animations: { () -> Void in
-//                    
-//                    tmpView!.transform = CGAffineTransformMakeScale(1, 1)
-//                    
-//                }, completion: { (finished) -> Void in
-//                        
-//                    
-//                })
-//            })
-        
-//            let duration = 0.2
-//            let maxValue = 10
-//            let tmpView : UIView?
-//            
-//            let sizeUpAnim : CABasicAnimation?
-//            
-//            if asView.isEqual(self.verticalAlignmentView){
-//                sizeUpAnim = CABasicAnimation(keyPath: "transform.scale.x")
-//                tmpView = self.verticalAlignmentView
-//            }else{
-//                sizeUpAnim = CABasicAnimation(keyPath: "transform.scale.x")
-//                tmpView = self.horizontalAlignmentView
-//            }
-//            
-//            let presentationLayer = asView.layer.presentationLayer() as! CALayer
-//        
-//            sizeUpAnim!.fromValue = presentationLayer.contentsScale
-//            sizeUpAnim!.toValue = maxValue
-//            sizeUpAnim!.duration = duration
-//            
-//            tmpView!.layer.addAnimation(sizeUpAnim, forKey :"")
+
         }
     }
     
