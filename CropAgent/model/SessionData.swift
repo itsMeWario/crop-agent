@@ -1,6 +1,6 @@
 //
 //  SessionData.swift
-//  ImportImage
+//  CropAgent
 //
 //  Created by bertrand DUPUY on 05/05/2015.
 //  Copyright (c) 2015 bertrand DUPUY. All rights reserved.

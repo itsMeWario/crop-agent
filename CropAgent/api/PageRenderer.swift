@@ -1,6 +1,6 @@
 //
 //  PageRenderer.swift
-//  ImportImage
+//  CropAgent
 //
 //  Created by bertrand DUPUY on 28/04/2015.
 //  Copyright (c) 2015 bertrand DUPUY. All rights reserved.

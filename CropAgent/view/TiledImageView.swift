@@ -1,6 +1,6 @@
 //
 //  ImageViewContainer.swift
-//  ImportImage
+//  CropAgent
 //
 //  Created by bertrand DUPUY on 24/05/2015.
 //  Copyright (c) 2015 bertrand DUPUY. All rights reserved.

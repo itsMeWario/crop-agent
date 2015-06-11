@@ -1,6 +1,6 @@
 //
 //  FormatTableVC.swift
-//  ImportImage
+//  CropAgent
 //
 //  Created by bertrand DUPUY on 10/05/2015.
 //  Copyright (c) 2015 bertrand DUPUY. All rights reserved.
@@ -76,6 +76,7 @@ class FormatTableVC: UITableViewController, UITableViewDelegate {
     }
     
     override func viewDidLayoutSubviews() {
+        navigationController?.hidesBarsOnTap = false
         navigationController?.toolbarHidden = false
     }
     

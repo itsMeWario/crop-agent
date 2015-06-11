@@ -1,6 +1,6 @@
 //
 //  FormatTableCell.swift
-//  ImportImage
+//  CropAgent
 //
 //  Created by bertrand DUPUY on 15/05/2015.
 //  Copyright (c) 2015 bertrand DUPUY. All rights reserved.
