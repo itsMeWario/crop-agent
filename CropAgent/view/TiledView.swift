@@ -25,7 +25,7 @@ class TiledView: UIView {
     var imageTiles = [[CGImage]]()
     
     var rotationTransform = CGAffineTransformIdentity
-    let tileSize = CGSize(width: 256, height: 256)
+    let tileSize = CGSize(width: 512, height: 512)
     var tilesCount = 0
     
     override class func layerClass() -> AnyClass {
@@ -67,17 +67,14 @@ class TiledView: UIView {
          compteur = 0
     }
     
-
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
-    
-    
     //tracé des tiles
     override func drawLayer(layer: CALayer!, inContext ctx: CGContext!) {
         
-        if let asImage = image{
+        if let asImage = self.image{
             
             let contextRect  = CGContextGetClipBoundingBox(ctx)
             let contextScale = CGContextGetCTM(ctx).a
@@ -87,37 +84,30 @@ class TiledView: UIView {
             let nbTilesPerRow : CGFloat
             let nbRows : CGFloat
             
-            if CGRectContainsRect(UIScreen.mainScreen().bounds, bounds){
-                nbTilesPerRow = ceil(bounds.width / tileSize.width)
-                nbRows = ceil(bounds.height / tileSize.height)
+            if CGRectContainsRect(UIScreen.mainScreen().bounds, self.bounds){
+                nbTilesPerRow = ceil(self.bounds.width / tileSize.width)
+                nbRows = ceil(self.bounds.height / tileSize.height)
             }else{
                 nbTilesPerRow = ceil(screenSize.width / tileSize.width) + 1.0
                 nbRows = ceil(screenSize.height / tileSize.height) + 1.0
             }
             
-            compteur++
+            self.compteur++
             
             CGContextTranslateCTM(ctx, asImage.size.width * 0.5, asImage.size.height * 0.5)
             CGContextScaleCTM(ctx, 1, -1)
             
-            CGContextConcatCTM(ctx, rotationTransform)
+            CGContextConcatCTM(ctx, self.rotationTransform)
             
             //positionnement de l'image relativement au contextRect
             let imageRect = CGRectApplyAffineTransform(CGRect(origin: CGPoint(x: -asImage.size.width*0.5, y: -asImage.size.height*0.5), size: asImage.size), CGAffineTransformMakeScale(1, 1))
             
             CGContextDrawImage(ctx, imageRect , asImage.CGImage)
             
-            //dernière tile
-            if compteur == Int(nbRows*nbTilesPerRow){
-                
-                //suppression de la vue masquant l'afficha des tiles
-                UIView.animateWithDuration(0.5, animations: { () -> Void in
-                    self.maskingView?.layer.opacity = 0
-                }, completion: { (finished) -> Void in
-                    
-                    
-                    self.maskingView?.removeFromSuperview()
-                })
+            //dernière tile - supression du mask
+            if self.compteur == Int(nbRows*nbTilesPerRow){
+                self.maskingView?.removeFromSuperview()
+                self.maskingView = nil
             }
         }
     }

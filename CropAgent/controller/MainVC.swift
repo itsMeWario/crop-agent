@@ -112,21 +112,22 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     //retourne une vue "snaphot" de l'image dans le modele
     func getRenderedImagePreview()->UIView{
     
-        let imageViewInFinalview = mainView.finalView.convertRect(mainView.tiledImageView.tiledView!.frame, fromView: mainView.tiledImageView.tiledView!.superview)
         let finalViewInMainview =  mainView.convertRect(mainView.finalView.frame, fromView: mainView.finalView.superview)
         
         mainView.borderView.hidden = true
+        mainView.finalBackgroundView.hidden = true
         
         //snapshot de la vue - si image contenue dans vue -> snapshot image sinon snapshot vue pour limiter sa taille
-        let imageSnapshot = CGRectContainsRect(view.bounds, imageViewInFinalview) ?  mainView.tiledImageView.tiledView!.snapshotViewAfterScreenUpdates(true) : view.snapshotViewAfterScreenUpdates(true)
-        imageSnapshot.transform = mainView.tiledImageView.tiledView!.transform
-        imageSnapshot.frame.origin = CGRectContainsRect(view.bounds, imageViewInFinalview) ? imageViewInFinalview.origin : CGPoint(x: -finalViewInMainview.origin.x, y: -finalViewInMainview.origin.y)
+        let imageSnapshot = mainView.snapshotViewAfterScreenUpdates(true)
+        imageSnapshot.frame.origin = CGPoint(x: -finalViewInMainview.origin.x, y: -finalViewInMainview.origin.y)
 
         mainView.finalView.addSubview(imageSnapshot)
         let resultSnapshot = mainView.finalView.snapshotViewAfterScreenUpdates(true)
         imageSnapshot.removeFromSuperview()
+        
+        mainView.finalBackgroundView.hidden = false
         mainView.borderView.hidden = false
-
+        
         return resultSnapshot
         
     }
