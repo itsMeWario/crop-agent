@@ -203,43 +203,53 @@ class PhotosCollectionVC: UICollectionViewController{
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         
         if segue.identifier == "imageSelected"{
-            requestLowResImage(selectedAsset!)
-        }
-    }
-    
-    
-    
-    //requete une version basse résolution de l'image qui sera utilisée
-    //comme background du CATiledLayer afin de limiter l'effet clignotement
-    //produit par l'affichage asynchrone des tiles
-    func requestLowResImage(asset : PHAsset){
-        
-        let manager = PHImageManager.defaultManager()
-        let options = PHImageRequestOptions()
-        options.synchronous = false
-        options.deliveryMode = PHImageRequestOptionsDeliveryMode.HighQualityFormat
-        options.resizeMode = PHImageRequestOptionsResizeMode.Exact
-        
-        let size : CGSize
-        
-        //si l'image est plus petite que 300 par 300, pas de redimensionnement
-        if selectedAsset?.pixelHeight < 300 && selectedAsset?.pixelWidth < 300{
-            size = CGSize(width: selectedAsset!.pixelHeight, height: selectedAsset!.pixelHeight)
-        }else{
-            //sinon sa taille est fixée à 10% de la taille originale
-            size = CGSize(width: CGFloat(selectedAsset!.pixelWidth)*0.1, height: CGFloat(selectedAsset!.pixelHeight)*0.1)
-        }
-        
-        manager.requestImageForAsset(selectedAsset, targetSize: size, contentMode: PHImageContentMode.AspectFit, options: options) { (image, infos) -> Void in
             
-            if let asImage = image{
-                var sessionData = SessionData.sharedData.getCopy()
-                sessionData.imageAsset = self.selectedAsset!
-                sessionData.lowResImage = asImage
-                SessionData.setAppData(sessionData)
-            }
+            SessionData.setImageAsset(self.selectedAsset!)
+            SessionData.requestLowResResizedImage()
+            
+            
+//            var sessionData = SessionData.sharedData.getCopy()
+//            sessionData.imageAsset = self.selectedAsset!
+//            sessionData.requestLowResResizedImage()
+//            SessionData.updateData(sessionData)
+//            
+//            let test = SessionData.sharedData.getCopy()
+            
+//            println(test)
+            
         }
     }
+    
+    
+    
+  //    func requestLowResResizedImage(asset : PHAsset){
+//        
+//        let manager = PHImageManager.defaultManager()
+//        let options = PHImageRequestOptions()
+//        options.synchronous = false
+//        options.deliveryMode = PHImageRequestOptionsDeliveryMode.HighQualityFormat
+//        options.resizeMode = PHImageRequestOptionsResizeMode.Exact
+//        
+//        let size : CGSize
+//        
+//        //si l'image est plus petite que 300 par 300, pas de redimensionnement
+//        if selectedAsset?.pixelHeight < 300 && selectedAsset?.pixelWidth < 300{
+//            size = CGSize(width: selectedAsset!.pixelHeight, height: selectedAsset!.pixelHeight)
+//        }else{
+//            //sinon sa taille est fixée à 10% de la taille originale
+//            size = CGSize(width: CGFloat(selectedAsset!.pixelWidth)*0.1, height: CGFloat(selectedAsset!.pixelHeight)*0.1)
+//        }
+//        
+//        manager.requestImageForAsset(selectedAsset, targetSize: size, contentMode: PHImageContentMode.AspectFit, options: options) { (image, infos) -> Void in
+//            
+//            if let asImage = image{
+//                var sessionData = SessionData.sharedData.getCopy()
+//                sessionData.imageAsset = self.selectedAsset!
+//                sessionData.lowResResizedImage = asImage
+//                SessionData.setAppData(sessionData)
+//            }
+//        }
+//    }
     
     
 

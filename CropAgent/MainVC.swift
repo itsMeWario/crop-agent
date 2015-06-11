@@ -36,12 +36,13 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     var isTraitChangingAfterRotation = false
     var rotateReco : UIRotationGestureRecognizer?
     var rotationTransform = CGAffineTransformIdentity
-    var sessionData : AppData?
+//    var sessionData  = SessionData.sharedData.getCopy()
     var currentImageOrientation : UIPrintInfoOrientation?
+    var initImageOrientation : UIPrintInfoOrientation?
     var mirrorApplied = false
     var ghostView : UIView?
-    var imageHighRes : UIImage?
-    var imageLowRes : UIImage?
+//    var imageHighRes : UIImage?
+//    var imageLowRes : UIImage?
     var imageTitle = ""
     
     
@@ -60,18 +61,18 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let sessionData = SessionData.sharedData.getCopy()
+        
         //récupération du nom de l'asset
-        let asset = SessionData.sharedData.getCopy().imageAsset!
+        let asset = sessionData.imageAsset!
         
         requestAssetName(asset, cbk: {
             self.navigationController?.toolbarHidden = false
             self.navigationController?.hidesBarsOnTap = true
-            
         })
         
-        println(SessionData.sharedData.getCopy().projectSize)
-        
-        currentImageOrientation = sessionData!.imageAsset?.pixelWidth > sessionData!.imageAsset?.pixelHeight ? UIPrintInfoOrientation.Landscape : .Portrait
+        currentImageOrientation = asset.pixelWidth > asset.pixelHeight ? UIPrintInfoOrientation.Landscape : .Portrait
+        initImageOrientation = currentImageOrientation
         
         //initialisation du rotation recognizer
         rotateReco = UIRotationGestureRecognizer(target: self, action: "rotateGesture:")
@@ -81,6 +82,9 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         //ajout d'une target au pinchGestureRecognizer de la scrollview pour compenser son action
         mainView.scrollView.pinchGestureRecognizer?.addTarget(self, action: "scrollPinchObserve:")
         
+        //ajout d'une target au panGestureRecognizer de la scrollview
+        mainView.scrollView.panGestureRecognizer.addTarget(self, action: "panObserve:")
+        
         //désactivation du pinch recognizer
         self.mainView.scrollView.pinchGestureRecognizer?.enabled = false
         
@@ -88,7 +92,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         mainView.scrollView.delegate = self
         
         //affichage du format en arrière plan du modele
-        mainView.formatLabel.text = self.sessionData!.projectFormat?.typeLabel
+        mainView.formatLabel.text = sessionData.projectFormat?.typeLabel
         
         //initialosation du contexte
         self.updateContext(0)
@@ -107,23 +111,16 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         let resultVC = self.storyboard?.instantiateViewControllerWithIdentifier("resultvc") as! ResultVC
         resultVC.resultImageSize = mainView.finalView.frame.size
         
-        
         //affectation de l'image lowRes pour fluidifier l'affichage du rendu highres
         resultVC.lowResPreview = getRenderedImagePreview()
         
-        //ouverture
         self.navigationController?.pushViewController(resultVC, animated: true)
-        
-        //calcul du rendu dans un autre thread
+
+        //calcul du rendu dans un autre thread pour affichage highres asynchrone
         dispatch_async(GlobalBackgroundQueue) {
             
             self.renderImage({(image : UIImage) in
-                
-                dispatch_async(GlobalMainQueue) {
-                    
-                    //affectation asynchrone de l'image lorsqu'elle est prête
-                    resultVC.setImage(image)
-                }
+                resultVC.setImage(image)
             })
         }
     }
@@ -135,15 +132,20 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         let imageViewInFinalview = mainView.finalView.convertRect(mainView.tiledImageView.tiledView!.frame, fromView: mainView.tiledImageView.tiledView!.superview)
         let finalViewInMainview =  mainView.convertRect(mainView.finalView.frame, fromView: mainView.finalView.superview)
         
-        let tiledViewSnapshot = mainView.tiledImageView.tiledView!.snapshotViewAfterScreenUpdates(true)
-        tiledViewSnapshot.frame.origin = imageViewInFinalview.origin
         mainView.borderView.hidden = true
-        mainView.finalView.addSubview(tiledViewSnapshot)
+        
+        //snapshot de la vue - si image contenue dans vue -> snapshot image sinon snapshot vue pour limiter sa taille
+        let imageSnapshot = CGRectContainsRect(view.bounds, imageViewInFinalview) ?  mainView.tiledImageView.tiledView!.snapshotViewAfterScreenUpdates(true) : view.snapshotViewAfterScreenUpdates(true)
+        imageSnapshot.transform = mainView.tiledImageView.tiledView!.transform
+        imageSnapshot.frame.origin = CGRectContainsRect(view.bounds, imageViewInFinalview) ? imageViewInFinalview.origin : CGPoint(x: -finalViewInMainview.origin.x, y: -finalViewInMainview.origin.y)
+
+        mainView.finalView.addSubview(imageSnapshot)
         let resultSnapshot = mainView.finalView.snapshotViewAfterScreenUpdates(true)
-        tiledViewSnapshot.removeFromSuperview()
+        imageSnapshot.removeFromSuperview()
         mainView.borderView.hidden = false
 
         return resultSnapshot
+        
     }
     
     
@@ -161,9 +163,9 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         let axisAlignment = isNewAlignmentHorizontal ? AlignmentAxis.horizontal : AlignmentAxis.vertical
         
         //si l'image est "bloquée", les vues d'alignment sont animées pour le signifier
-        if isLocked && mainView.targetAlignment[axisAlignment] == alignmentType{
+        if (mainView.isHorizontalAlignmentLocked &&  axisAlignment == .horizontal) || (mainView.isVerticalAlignmentLocked &&  axisAlignment == .vertical){
             
-            let alignmentView = axisAlignment == .horizontal ? mainView.horizontalAlignmentView : mainView.verticalAlignmentView
+            let alignmentView = axisAlignment == .horizontal ? mainView.verticalAlignmentView : mainView.horizontalAlignmentView
             mainView.animateAlignmentViewSizeChange(alignmentView)
         
         }else if mainView.targetAlignment[axisAlignment] != alignmentType{
@@ -199,16 +201,16 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
             //si l'état du blocage est actif, les contraintes d'alignement
             //appliquées sont récupérées, activées, et le layout de la scrollview est modifié en conséquence
             
-            if mainView.targetAlignment[AlignmentAxis.vertical] != .none{
+            if mainView.verticalAlignmentEnabled{
                 mainView.updateScrollviewLayout(mainView.targetAlignment[AlignmentAxis.vertical]!)
                 mainView.horizontalAlignmentView?.backgroundColor = mainView.alignmentViewLockedColor
-                mainView.verticalAlignmentEnabled = true
+                mainView.isVerticalAlignmentLocked = true
             }
             
-            if mainView.targetAlignment[AlignmentAxis.horizontal] != .none{
+            if mainView.horizontalAlignmentEnabled{
                 mainView.updateScrollviewLayout(mainView.targetAlignment[AlignmentAxis.horizontal]!)
                 mainView.verticalAlignmentView?.backgroundColor = mainView.alignmentViewLockedColor
-                mainView.horizontalAlignmentEnabled = true
+                mainView.isHorizontalAlignmentLocked = true
             }
         
         }else{
@@ -221,8 +223,8 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
             mainView.verticalAlignmentView?.backgroundColor = UIColor(white: 0.9, alpha: 1)
             mainView.horizontalAlignmentView?.backgroundColor = UIColor(white: 0.9, alpha: 1)
 
-            mainView.horizontalAlignmentEnabled = false
-            mainView.verticalAlignmentEnabled = false
+            mainView.isHorizontalAlignmentLocked = false
+            mainView.isVerticalAlignmentLocked = false
             
         }
         
@@ -263,7 +265,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         if view.userInteractionEnabled{
             
             //déclenchement de la rotation
-            if !isLocked{
+            if !isLocked || mainView.isImageRotationEnabled{
                 
                 view.userInteractionEnabled = false
                 let transform = CGAffineTransformMakeRotation(angle)
@@ -290,6 +292,31 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         appContextId = 0
         super.init(coder: aDecoder)
     }
+    
+    
+    @IBAction func preprareMirrorTransform(sender: UIBarButtonItem){
+        
+        if self.view.userInteractionEnabled{
+            
+            mirrorApplied = !mirrorApplied
+            
+            self.view.userInteractionEnabled = false
+            
+            let transform :CGAffineTransform
+            
+            if sender.tag == AlignmentAxis.horizontal.rawValue{
+                transform = CGAffineTransformMakeScale(1, -1)
+            }else{
+                transform = CGAffineTransformMakeScale(-1, 1)
+            }
+            
+            rotationTransform = CGAffineTransformConcat(rotationTransform, transform)
+            
+            self.applyTransformToImage(transform, isRotation : false)
+            
+        }
+    }
+
     
     
     //répond à la demande de rotation faite par l'utilisateur en tournant directement l'image
@@ -352,14 +379,9 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         view.userInteractionEnabled = false
         
         //suppression des repères d'alignement si l'image n'est pas bloquée
-        if !mainView.verticalAlignmentEnabled{
-            mainView.hideAlignmentView(mainView.targetAlignment[AlignmentAxis.vertical]!, cbk : nil)
-            self.mainView.targetAlignment[AlignmentAxis.vertical]! = .none
-        }
-        
-        if !mainView.horizontalAlignmentEnabled{
-            mainView.hideAlignmentView(mainView.targetAlignment[AlignmentAxis.horizontal]!, cbk : nil)
-            self.mainView.targetAlignment[AlignmentAxis.horizontal]! = .none
+        if !isLocked{
+            mainView.targetAlignment[AlignmentAxis.vertical]! = .none
+            mainView.targetAlignment[AlignmentAxis.horizontal]! = .none
         }
        
         UIView.animateWithDuration(0.4, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 0, options: UIViewAnimationOptions.BeginFromCurrentState, animations:  { () -> Void in
@@ -367,7 +389,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
             self.mainView.scrollView.zoomScale *= zoomScale
             
             //mise à jour des contraintes autolayout de la scrollviewx
-            if self.mainView.horizontalAlignmentEnabled{
+            if self.isLocked && self.mainView.horizontalAlignmentEnabled{
                 self.mainView.scrollViewWidth.constant *= zoomScale
                 if self.mainView.targetAlignment[AlignmentAxis.horizontal] == .rightAlignment{
                     self.mainView.scrollViewCenterX.constant -= (self.mainView.tiledImageView.frame.width - imageViewInView.width)*0.5
@@ -376,9 +398,8 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
                 }
             }
             
-            if self.mainView.verticalAlignmentEnabled{
+            if self.isLocked && self.mainView.verticalAlignmentEnabled{
                 self.mainView.scrollViewHeight.constant *= zoomScale
-                
                 if self.mainView.targetAlignment[AlignmentAxis.vertical] == .bottomAlignment{
                     self.mainView.scrollViewCenterY.constant -= (self.mainView.tiledImageView.frame.height - imageViewInView.height)*0.5
                 }else if self.mainView.targetAlignment[AlignmentAxis.vertical] == .topAlignment{
@@ -403,18 +424,20 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     //avant d'y revenir une fois la transformation terminée
     func applyTransformToImage(transform : CGAffineTransform, isRotation : Bool){
         
+        let sessionData = SessionData.sharedData.getCopy()
+        
         let tiledViewInMainView = self.mainView.convertRect(self.mainView.tiledImageView.tiledView!.frame, fromView: self.mainView.tiledImageView.tiledView!.superview)
         let zoomScale = self.mainView.scrollView.zoomScale
         let scaleTransform = CGAffineTransformMakeScale(zoomScale, zoomScale)
         
         //taille de l'image après transformation
-        var newImageSize = (!isRotation && sessionData!.initImageOrientation != currentImageOrientation) || (isRotation && sessionData!.initImageOrientation == currentImageOrientation) ? CGSize(width: mainView.initResizedImageSize!.height, height: mainView.initResizedImageSize!.width) : mainView.initResizedImageSize!
+        var newImageSize = (!isRotation && initImageOrientation != currentImageOrientation) || (isRotation && initImageOrientation == currentImageOrientation) ? CGSize(width: mainView.initResizedImageSize!.height, height: mainView.initResizedImageSize!.width) : mainView.initResizedImageSize!
         
         //modification de l'image lowRes pour la conformer à la transformation
-        self.mainView.tiledImageView.image = UIImage(CGImage: transformImage(newImageSize, image: self.imageLowRes!, transform: rotationTransform))!
+        self.mainView.tiledImageView.image = UIImage(CGImage: transformImage(newImageSize, image: sessionData.lowResResizedImage!, transform: rotationTransform))!
        
         //transformation affine supplémentaire appliquée à la vue porteuse de l'image de si l'effet "mirror" est appliqué
-        if (isRotation &&  (mirrorApplied)) ||  (!isRotation && sessionData!.initImageOrientation != currentImageOrientation){
+        if (isRotation &&  (mirrorApplied)) ||  (!isRotation && initImageOrientation != currentImageOrientation){
             self.mainView.tiledImageView.tiledView!.transform = CGAffineTransformConcat(self.mainView.tiledImageView.tiledView!.transform, CGAffineTransformMakeScale(-1, -1))
         }
         
@@ -439,6 +462,16 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
             //si les dimensions de l'image ont changé
             if isRotation{
                 self.mainView.scrollView.contentSize = CGSize(width: newImageSize.width*zoomScale, height: newImageSize.height*zoomScale)
+                
+                if self.isLocked{
+                    if self.mainView.isHorizontalAlignmentLocked{
+                        self.mainView.updateScrollviewLayout(self.mainView.targetAlignment[AlignmentAxis.horizontal]!)
+                    }
+                    
+                    if self.mainView.isVerticalAlignmentLocked{
+                        self.mainView.updateScrollviewLayout(self.mainView.targetAlignment[AlignmentAxis.vertical]!)
+                    }
+                }
             }
             
             self.mainView.tiledImageView.frame.size = self.mainView.scrollView.contentSize
@@ -462,6 +495,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
             
             //actualisation de l'orientation de l'image
             self.currentImageOrientation = self.mainView.tiledImageView.frame.size.width > self.mainView.tiledImageView.frame.size.height ? .Landscape : .Portrait
+
             
             self.view.userInteractionEnabled = true
         })
@@ -507,21 +541,23 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     //avant d'appliquer les transformations voulues par l'utilisateur
     func renderImage(cbk : ((image : UIImage)->Void)?){
         
+        let sessionData = SessionData.sharedData.getCopy()
+        
         let screenScale = UIScreen.mainScreen().scale
-        let targetSize = sessionData!.projectSize!
+        let targetSize = sessionData.projectSize
         let finalViewInView = mainView.convertRect(mainView.finalView.frame, fromView: mainView.finalView.superview)
         
         //récupération de l'image à ses dimensions d'origine
         let manager = PHImageManager.defaultManager()
         let options = PHImageRequestOptions()
-        options.synchronous = true
+        options.synchronous = false
         options.resizeMode = PHImageRequestOptionsResizeMode.Fast
       
-        manager.requestImageForAsset(sessionData!.imageAsset, targetSize: PHImageManagerMaximumSize, contentMode: PHImageContentMode.AspectFit, options: options) { (image, _) -> Void in
+        manager.requestImageForAsset(sessionData.imageAsset, targetSize: PHImageManagerMaximumSize, contentMode: PHImageContentMode.AspectFit, options: options) { (image, _) -> Void in
 
             if let initImage = image {
                 
-                let transformedImageSize = self.currentImageOrientation == self.sessionData!.initImageOrientation ? initImage.size : CGSize(width: initImage.size.height, height: initImage.size.width)
+                let transformedImageSize = self.currentImageOrientation == self.initImageOrientation ? initImage.size : CGSize(width: initImage.size.height, height: initImage.size.width)
                 let transformedImage = UIImage(CGImage: self.transformImage(transformedImageSize, image: initImage, transform: self.rotationTransform))!
                 let zoomScale = self.mainView.scrollView.zoomScale
                 
@@ -537,7 +573,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
                 
                 UIGraphicsEndImageContext()
                 
-                contextSize = finalViewInView.width == self.mainView.initResizedTargetSize?.width ? targetSize : CGSize(width: targetSize.height, height: targetSize.width)
+                contextSize = finalViewInView.width == self.mainView.resizedProjectSize?.width ? targetSize : CGSize(width: targetSize.height, height: targetSize.width)
                 
                 UIGraphicsBeginImageContext(contextSize )
                 ctx = UIGraphicsGetCurrentContext()
@@ -569,7 +605,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         
         let nextOrientation = finalSize.width > finalSize.height ? UIPrintInfoOrientation.Landscape : .Portrait
         
-        if sessionData!.initImageOrientation == nextOrientation{
+        if initImageOrientation == nextOrientation{
             
             initWidth = finalSize.width
             initHeight = finalSize.height
@@ -598,8 +634,8 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
    
 
     override func viewDidAppear(animated: Bool) {
-        imageHighRes = mainView.tiledImageView.tiledView?.image
-        imageLowRes = mainView.tiledImageView.image
+//        imageHighRes = mainView.tiledImageView.tiledView?.image
+//        imageLowRes = mainView.tiledImageView.image
     }
     
     
@@ -654,9 +690,7 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     
     //mise à jour de la toolbar selon le context
     func loadToolBar(contextId : Int){
-        
-        
-            
+                   
             let flexibleEmptySpace = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.FlexibleSpace, target: nil, action: nil)
             let fixedEmptySpace = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.FixedSpace, target: nil, action: nil)
             
@@ -703,9 +737,9 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
                 
             case 2 : //rotate
                 
-                let horizontalMirror = UIBarButtonItem(image :UIImage(named: "horizontalMirror"), style: UIBarButtonItemStyle.Plain, target: self, action: "applyMirror:")
+                let horizontalMirror = UIBarButtonItem(image :UIImage(named: "horizontalMirror"), style: UIBarButtonItemStyle.Plain, target: self, action: "preprareMirrorTransform:")
                 horizontalMirror.tag = AlignmentAxis.horizontal.rawValue
-                let verticalMirror = UIBarButtonItem(image :UIImage(named: "verticalMirror"), style: UIBarButtonItemStyle.Plain, target: self, action: "applyMirror:")
+                let verticalMirror = UIBarButtonItem(image :UIImage(named: "verticalMirror"), style: UIBarButtonItemStyle.Plain, target: self, action: "preprareMirrorTransform:")
                 verticalMirror.tag = AlignmentAxis.vertical.rawValue
                 let rotateAntiClockwise = UIBarButtonItem(image :UIImage(named: "turnLeft"), style: UIBarButtonItemStyle.Plain, target: self, action: "rotateActionBtn:")
                 rotateAntiClockwise.tag = 1
@@ -776,19 +810,27 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     override func viewDidLayoutSubviews() {
         
         super.viewDidLayoutSubviews()
-        
-        var forSizeTransition = false
+
         
         //si le layout s'actualise suite à une rotation du device
         if mainView.initInterfaceOrientation != nil && isTraitChangingAfterRotation{
-            forSizeTransition = true
+            
+            //demande une mise à jour du layout de mainView
+            mainView.updateLayoutForSizeTransition(view.bounds)
             isTraitChangingAfterRotation = false
+            
+        }else if mainView.initInterfaceOrientation == nil{ //si initialisation du controlleur
+            
+            let sessionData = SessionData.sharedData.getCopy()
+            
+            let test = sessionData.resizedProjectSize
+        
+            mainView.initAppInterface(view.bounds, resizedImageSize : sessionData.resizedImageSize, resizedModelSize : test, lowResImage : sessionData.lowResResizedImage!)
         }
         
-        //demande une mise à jour du layout de mainView
-        mainView.updateViewerLayout(view.bounds, forSizeTransition : forSizeTransition)
-        self.mainView.scrollView.pinchGestureRecognizer?.enabled = appContextId == 1 ? true : false
         
+        self.mainView.scrollView.pinchGestureRecognizer?.enabled = appContextId == 1 ? true : false
+
        
     }
 
@@ -821,8 +863,6 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     @IBAction func changeAppContextAction(sender: UIBarButtonItem) {
         updateContext(sender.tag)
     }
-
-    
     
     //permet d'observer le pinchGestureRecognizer la scrollView et 
     //d'adapter le layout lorsque des contraintes d'alignement sont appliquées
@@ -830,6 +870,11 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         if sender.state == .Began || sender.state == .Changed{
             mainView.adaptContraintsWhileZoomingManually()
         }
+    }
+    
+    func panObserve(sender : UIPanGestureRecognizer){
+        
+        
     }
     
     
@@ -850,7 +895,6 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
     
     func scrollViewWillBeginDragging(scrollView: UIScrollView) {
         
-        
         //les vues d'alignement sont supprimées si l'image est libre de tout mouvement
         if !isLocked{
         
@@ -866,21 +910,16 @@ class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegat
         }else{
             // elles sont animées pour signifier le blocage de l'image
             
-            if mainView.verticalAlignmentEnabled{
-                mainView.animateAlignmentViewSizeChange(mainView.verticalAlignmentView)
+            if mainView.isVerticalAlignmentLocked{
+                mainView.animateAlignmentViewSizeChange(mainView.horizontalAlignmentView)
             }else{
-                let currentAligment = mainView.targetAlignment[AlignmentAxis.vertical]!
-                mainView.hideAlignmentView(currentAligment, cbk: nil)
                 self.mainView.targetAlignment[AlignmentAxis.vertical]! = .none
             }
             
-            if mainView.horizontalAlignmentEnabled{
-                mainView.animateAlignmentViewSizeChange(mainView.horizontalAlignmentView)
+            if mainView.isHorizontalAlignmentLocked{
+                mainView.animateAlignmentViewSizeChange(mainView.verticalAlignmentView)
             }else{
-                let currentAligment = mainView.targetAlignment[AlignmentAxis.horizontal]!
-                mainView.hideAlignmentView(currentAligment, cbk: nil)
                 self.mainView.targetAlignment[AlignmentAxis.horizontal]! = .none
-               
             }
         }
     }

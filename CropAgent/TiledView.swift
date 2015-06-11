@@ -16,12 +16,7 @@ class TiledView: UIView {
     var leadingConstraint: NSLayoutConstraint!
     var trailingConstraint: NSLayoutConstraint!
     
-    var image : UIImage?{
-        didSet{
-            //layer.setNeedsDisplay()
-        }
-    }
-    
+    var image : UIImage?
     
     
     
@@ -72,8 +67,9 @@ class TiledView: UIView {
         super.init(coder: aDecoder)
     }
     
-    
+    //tracé des tiles
     override func drawLayer(layer: CALayer!, inContext ctx: CGContext!) {
+        
         
         if let asImage = image{
             
@@ -84,6 +80,8 @@ class TiledView: UIView {
             CGContextScaleCTM(ctx, 1, -1)
             
             CGContextConcatCTM(ctx, rotationTransform)
+            
+            //positionnement de l'image relativement au contextRect
             let imageRect = CGRectApplyAffineTransform(CGRect(origin: CGPoint(x: -asImage.size.width*0.5, y: -asImage.size.height*0.5), size: asImage.size), CGAffineTransformMakeScale(1, 1))
             
             CGContextDrawImage(ctx, imageRect , asImage.CGImage)

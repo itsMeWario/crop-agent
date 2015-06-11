@@ -26,8 +26,6 @@ class FormatTableVC: UITableViewController, UITableViewDelegate {
         self.clearsSelectionOnViewWillAppear = false
         navigationItem.leftBarButtonItem?.image = UIImage(named: "imageCollection")
         tableData = Format.getAllFormats()
-        navigationController?.toolbarHidden = false
-             
     }
 
     override func didReceiveMemoryWarning() {
@@ -43,6 +41,18 @@ class FormatTableVC: UITableViewController, UITableViewDelegate {
 
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tableData.count
+    }
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        
+        if segue.identifier == "showMainVC"{
+            var selectedItemIP = tableView.indexPathForSelectedRow()!
+            SessionData.setFormat(tableData[selectedItemIP.item])
+            SessionData.requestResizedImage({ (image : UIImage) -> Void in
+                 //affecte l'image à la tiledView qui va pouvoir calculer le rendu de son CATiledLayer
+                (segue.destinationViewController as! MainVC).mainView.tiledImageView.setImage(image, imageDef: ImageDefinition.highRes)
+            })
+        }
     }
 
 
@@ -63,6 +73,10 @@ class FormatTableVC: UITableViewController, UITableViewDelegate {
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
            formatSelected.enabled = true
+    }
+    
+    override func viewDidLayoutSubviews() {
+        navigationController?.toolbarHidden = false
     }
     
     

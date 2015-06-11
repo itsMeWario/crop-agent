@@ -37,8 +37,10 @@ class MainView: UIView {
     
     var currentImageSize = CGSizeZero
     var initResizedImageSize : CGSize?
-    var initResizedTargetSize : CGSize?
+    var resizedProjectSize : CGSize?
     var contentOffset = CGPointZero
+    
+    var isImageRotationEnabled = true
     
     let alignmentViewLockedColor = UIColor(red: 1, green: 0, blue: 0, alpha: 0.5)
     
@@ -46,9 +48,34 @@ class MainView: UIView {
     var isImageLocked = false
     var horizontalAlignmentEnabled = false
     var verticalAlignmentEnabled = false
+    var isHorizontalAlignmentLocked = false
+    var isVerticalAlignmentLocked = false
     
     var initInterfaceOrientation : UIPrintInfoOrientation?
-    var targetAlignment :[AlignmentAxis : ImageAlignment] = [AlignmentAxis.horizontal : ImageAlignment.none, AlignmentAxis.vertical : ImageAlignment.none]
+    
+    var targetAlignment :[AlignmentAxis : ImageAlignment] = [AlignmentAxis.horizontal : ImageAlignment.none, AlignmentAxis.vertical : ImageAlignment.none]{
+        
+        didSet{
+            
+            if targetAlignment[AlignmentAxis.horizontal]! != .none{
+                horizontalAlignmentEnabled = true
+                isImageRotationEnabled = targetAlignment[AlignmentAxis.horizontal]! == .horizontalCenterAlignment ? true : false
+            }else{
+                horizontalAlignmentEnabled = false
+                isImageRotationEnabled = targetAlignment[AlignmentAxis.vertical]! == .none || targetAlignment[AlignmentAxis.vertical]! == .verticalCenterAlignment ? true : false
+                hideAlignmentView(AlignmentAxis.horizontal, cbk : nil)
+            }
+            
+            if targetAlignment[AlignmentAxis.vertical]! != .none{
+                verticalAlignmentEnabled = true
+                isImageRotationEnabled = targetAlignment[AlignmentAxis.vertical]! == .verticalCenterAlignment ? true : false
+            }else{
+                verticalAlignmentEnabled = false
+                isImageRotationEnabled = targetAlignment[AlignmentAxis.horizontal]! == .none || targetAlignment[AlignmentAxis.horizontal]! == .horizontalCenterAlignment ? true : false
+                hideAlignmentView(AlignmentAxis.vertical, cbk : nil)
+            }
+        }
+    }
     
     convenience init(frame: CGRect, containerView : UIView) {
         self.init(frame: frame)
@@ -118,25 +145,20 @@ class MainView: UIView {
     
     
     //supprime le repere d'alignement associée à un type d'alignement
-    func hideAlignmentView(alignmentType : ImageAlignment, cbk : (()->Void)?){
+    func hideAlignmentView(alignmentAxis : AlignmentAxis, cbk : (()->Void)?){
         
         var alignmentView : UIView?
         
-        if alignmentType != .none{
+        if alignmentAxis == .horizontal{
+            verticalAlignmentView?.removeFromSuperview()
+            verticalAlignmentView = nil
+        }else{
+            horizontalAlignmentView?.removeFromSuperview()
+            horizontalAlignmentView = nil
+        }
         
-            var isHorizontallyAligned = alignmentType == .leftAlignment ? true : alignmentType == .rightAlignment ? true : alignmentType == .horizontalCenterAlignment ? true : false
-            
-            if isHorizontallyAligned{
-                verticalAlignmentView?.removeFromSuperview()
-                verticalAlignmentView = nil
-            }else{
-                horizontalAlignmentView?.removeFromSuperview()
-                horizontalAlignmentView = nil
-            }
-            
-            if cbk != nil{
-                cbk!()
-            }
+        if cbk != nil{
+            cbk!()
         }
     }
 
@@ -145,7 +167,9 @@ class MainView: UIView {
     //affiche le repere d'alignement pour un type d'alignement donné
     func showAlignmentView(parentView : UIView, animated : Bool, alignmentType : ImageAlignment, cbk : (()->Void)?){
         
-        hideAlignmentView(alignmentType, cbk : {
+        var aligmentAxis = alignmentType == .leftAlignment ? AlignmentAxis.horizontal : alignmentType == .rightAlignment ? .horizontal : alignmentType == .horizontalCenterAlignment ? .horizontal : .vertical
+        
+        hideAlignmentView(aligmentAxis, cbk : {
         
             let viewSize : CGSize!
             let viewOrigin : CGPoint!
@@ -169,7 +193,7 @@ class MainView: UIView {
                 self.verticalAlignmentView?.removeFromSuperview()
                 self.verticalAlignmentView = tmpView
                 
-                tmpView.backgroundColor =  self.horizontalAlignmentEnabled ? self.alignmentViewLockedColor : UIColor(white: 0.9, alpha: 1)
+                tmpView.backgroundColor =  self.isHorizontalAlignmentLocked ? self.alignmentViewLockedColor : UIColor(white: 0.9, alpha: 1)
                 
             case .topAlignment, .bottomAlignment, .verticalCenterAlignment :
                 viewSize = CGSize(width: viewMaxSide , height: self.borderView.layer.borderWidth)
@@ -185,7 +209,7 @@ class MainView: UIView {
                 self.horizontalAlignmentView?.removeFromSuperview()
                 self.horizontalAlignmentView = tmpView
                 
-                tmpView.backgroundColor = self.verticalAlignmentEnabled ? self.alignmentViewLockedColor : UIColor(white: 0.9, alpha: 1)
+                tmpView.backgroundColor = self.isVerticalAlignmentLocked ? self.alignmentViewLockedColor : UIColor(white: 0.9, alpha: 1)
                 
             default :
                 viewOrigin = CGPointZero
@@ -223,28 +247,52 @@ class MainView: UIView {
     func animateAlignmentViewSizeChange(alignmentView : UIView?){
         
         if let asView = alignmentView{
+            
+//            let tmpView : UIView?
+//            
+//            if asView.isEqual(self.verticalAlignmentView){
+//                tmpView = self.verticalAlignmentView
+//            }else{
+//                tmpView = self.horizontalAlignmentView
+//            }
+//            
+//            UIView.animateWithDuration(0.1, animations: { () -> Void in
+//                
+//                tmpView!.transform = CGAffineTransformMakeScale(10, 10)
+//                
+//            }, completion: { (finished) -> Void in
+//                
+//                UIView.animateWithDuration(0.1, animations: { () -> Void in
+//                    
+//                    tmpView!.transform = CGAffineTransformMakeScale(1, 1)
+//                    
+//                }, completion: { (finished) -> Void in
+//                        
+//                    
+//                })
+//            })
         
-            let duration = 0.2
-            let maxValue = 10
-            let tmpView : UIView?
-            
-            let sizeUpAnim : CABasicAnimation?
-            
-            if asView.isEqual(self.verticalAlignmentView){
-                sizeUpAnim = CABasicAnimation(keyPath: "transform.scale.y")
-                tmpView = self.verticalAlignmentView
-            }else{
-                sizeUpAnim = CABasicAnimation(keyPath: "transform.scale.x")
-                tmpView = self.horizontalAlignmentView
-            }
-            
-            let presentationLayer = asView.layer.presentationLayer() as! CALayer
-        
-            sizeUpAnim!.fromValue = presentationLayer.contentsScale
-            sizeUpAnim!.toValue = maxValue
-            sizeUpAnim!.duration = duration
-            
-            tmpView!.layer.addAnimation(sizeUpAnim, forKey :"")
+//            let duration = 0.2
+//            let maxValue = 10
+//            let tmpView : UIView?
+//            
+//            let sizeUpAnim : CABasicAnimation?
+//            
+//            if asView.isEqual(self.verticalAlignmentView){
+//                sizeUpAnim = CABasicAnimation(keyPath: "transform.scale.x")
+//                tmpView = self.verticalAlignmentView
+//            }else{
+//                sizeUpAnim = CABasicAnimation(keyPath: "transform.scale.x")
+//                tmpView = self.horizontalAlignmentView
+//            }
+//            
+//            let presentationLayer = asView.layer.presentationLayer() as! CALayer
+//        
+//            sizeUpAnim!.fromValue = presentationLayer.contentsScale
+//            sizeUpAnim!.toValue = maxValue
+//            sizeUpAnim!.duration = duration
+//            
+//            tmpView!.layer.addAnimation(sizeUpAnim, forKey :"")
         }
     }
     
@@ -258,7 +306,7 @@ class MainView: UIView {
             let deltaX = (currentImageSize.width - tiledImageView.frame.width)
             let deltaY = (currentImageSize.height - tiledImageView.frame.height)
             
-            if horizontalAlignmentEnabled{
+            if isImageLocked && horizontalAlignmentEnabled{
                 
                 scrollView.bounds.origin.x = 0
                 scrollViewWidth.constant -= deltaX
@@ -274,7 +322,7 @@ class MainView: UIView {
                 }
             }
             
-            if verticalAlignmentEnabled{
+            if isImageLocked && verticalAlignmentEnabled{
                 
                 scrollView.bounds.origin.y = 0
                 scrollViewHeight.constant -= deltaY
@@ -358,102 +406,49 @@ class MainView: UIView {
         
     //initialise la vue en définissant la taille de l'image par rapport à celle
     //du modele pour que celui ci s'affiche dans de bonnes proportions
-    func initAppInterface(parentBounds : CGRect, cbk : (()->Void)?){
-        
-        scrollView.layoutIfNeeded()
-        
-        let sessionData = SessionData.sharedData.getCopy()
-        
-        if let imageAsset = sessionData.imageAsset{
+    func initAppInterface(parentBounds : CGRect, resizedImageSize : CGSize, resizedModelSize : CGSize, lowResImage : UIImage){
+                 
+            initResizedImageSize = resizedImageSize
+            resizedProjectSize = resizedModelSize
+            initInterfaceOrientation = UIApplication.sharedApplication().statusBarOrientation.isPortrait ? UIPrintInfoOrientation.Portrait : .Landscape
             
-            let interfaceOrientation = UIApplication.sharedApplication().statusBarOrientation.isPortrait ? UIPrintInfoOrientation.Portrait : .Landscape
-            let targetRatio = sessionData.projectRatio
-            let targetSize = sessionData.projectSize!
-            let imageInitResizeScale : CGFloat
-            let projectsize = sessionData.projectSize!
-            var resizedTargetSize = CGSizeZero
-            
-            //initialise les contraintes de la scrollview
+            //contraintes de la scrollview
             scrollViewWidth.constant = parentBounds.width
             scrollViewHeight.constant = parentBounds.height
             
-            //si la taille du projet plus petite celle taille de l'écran (plus petits formats sur ipad)
-            if sessionData.projectSize!.width < parentBounds.width && sessionData.projectSize!.height < parentBounds.height{
-                
-                //le modele se voit affecté la taille du projet
-                finalWidth.constant = sessionData.projectSize!.width
-                finalHeight.constant = sessionData.projectSize!.height
-                finalBackgroundWidth.constant = finalWidth.constant
-                finalBackgroundHeight.constant = finalHeight.constant
-                finalView.superview?.layoutIfNeeded()
-                
-                //pas de redimensionnement
-                imageInitResizeScale = 1
-                
-            }else{
-                
-                //sinon on applique un coefficient de redimensionnement à la plus grande dimension du modele
-                //pour qu'il puisse s'afficher entierement sur l'écran
-                let idiomScale :CGFloat = UIDevice.currentDevice().userInterfaceIdiom == .Pad ? 0.7 : 0.9
-                
-                imageInitResizeScale = (min(parentBounds.width, parentBounds.height) * idiomScale) / min(targetSize.width, targetSize.height)
-                
-                finalWidth.constant = targetSize.width * imageInitResizeScale
-                finalHeight.constant = targetSize.height * imageInitResizeScale
-                finalBackgroundWidth.constant = finalWidth.constant
-                finalBackgroundHeight.constant = finalHeight.constant
-                
-            }
+            //contraintes de la vue representant le format et son arriere plan
+            finalWidth.constant = resizedModelSize.width
+            finalHeight.constant = resizedModelSize.height
+            finalBackgroundWidth.constant = finalWidth.constant
+            finalBackgroundHeight.constant = finalHeight.constant
             
-            finalView.superview?.layoutIfNeeded()
-            
-            initResizedImageSize = CGSize(width: floor(CGFloat(imageAsset.pixelWidth)*imageInitResizeScale), height: floor(CGFloat(imageAsset.pixelHeight)*imageInitResizeScale))
-            
-            initResizedTargetSize = finalView.frame.size
-            initInterfaceOrientation = interfaceOrientation
-            
+            finalView.layoutIfNeeded()
+            finalBackgroundView.layoutIfNeeded()
+        
             //création de tiledImageView, affectation de l'image lowRes à l'imageView
-            let sessionData = SessionData.sharedData.getCopy()
-            self.tiledImageView = TiledImageView(frame: CGRect(origin: CGPointZero, size: initResizedImageSize!))
-            self.tiledImageView.setImage(sessionData.lowResImage!, imageDef: ImageDefinition.lowRes)
+            self.tiledImageView = TiledImageView(frame: CGRect(origin: CGPointZero, size: resizedImageSize))
+            self.tiledImageView.setImage(lowResImage, imageDef: ImageDefinition.lowRes)
+            self.tiledImageView.sizeContent(resizedImageSize)
             self.scrollView.addSubview(self.tiledImageView)
             
-            //requete de l'image aux dimensions tout juste calculées de manière asynchrone
-            let manager = PHImageManager.defaultManager()
-            let options = PHImageRequestOptions()
-            options.synchronous = false
-            options.deliveryMode = PHImageRequestOptionsDeliveryMode.HighQualityFormat
-            options.resizeMode = PHImageRequestOptionsResizeMode.Exact
+            //calcul des maximum et minimum zoomscale de la scrollview
+            self.setMaxMinZoomScalesForCurrentBounds(resizedImageSize)
+            self.scrollView.zoomScale = 1
             
-            manager.requestImageForAsset(imageAsset, targetSize: initResizedImageSize!, contentMode: PHImageContentMode.AspectFit, options: options) { (image, infos) -> Void in
-                
-                if let asImage = image{
-                    
-                    self.initResizedImageSize! = asImage.size
-                   
-                    //affecte l'image à la tiledView qui va pouvoir calculer le rendu de son CATiledLayer
-                    self.tiledImageView.setImage(asImage, imageDef: ImageDefinition.highRes)
-                    
-                    //calcul des maximum et minimum zoomscale de la scrollview
-                    self.setMaxMinZoomScalesForCurrentBounds(asImage.size)
-                    self.scrollView.zoomScale = 1
-                    
-                    //mise à jour de l'inset de la scrollview
-                    self.updateScrollViewContentInset(parentBounds)
-                    
-                    self.scrollView.contentSize = CGSize(width: asImage.size.width*self.scrollView.zoomScale, height: asImage.size.height*self.scrollView.zoomScale)
-                    
-                    //détermination de l'offset pour que l'image appaisse centré dans l'écran et par raport au modele
-                    let offsetX = asImage.size.width*0.5 - parentBounds.midX
-                    let offsetY = asImage.size.height*0.5  - parentBounds.midY
-                    
-                    self.scrollView.contentOffset = CGPoint(x: offsetX, y: offsetY)
-                    
-                    self.isInterfaceLoaded = true
-                   
-                }
-            }
-        }
+            //mise à jour de l'inset de la scrollview
+            self.updateScrollViewContentInset(parentBounds)
+            
+            self.scrollView.contentSize = CGSize(width: initResizedImageSize!.width*self.scrollView.zoomScale, height: initResizedImageSize!.height*self.scrollView.zoomScale)
+            
+            //détermination de l'offset pour que l'image appaisse centré dans l'écran et par raport au modele
+            let offsetX = initResizedImageSize!.width*0.5 - parentBounds.midX
+            let offsetY = initResizedImageSize!.height*0.5  - parentBounds.midY
+            
+            self.scrollView.contentOffset = CGPoint(x: offsetX, y: offsetY)
+            
+            self.isInterfaceLoaded = true
+            
+       
     }
     
     //déplace l'image dans la scrollview pour qu'elle s'aligne selon la nouvelle contrainte
@@ -474,7 +469,6 @@ class MainView: UIView {
                
             }else{
                 self.scrollView.setContentOffset(newOffset, animated: true)
-              
             }
             
             self.layoutIfNeeded()
@@ -499,6 +493,9 @@ class MainView: UIView {
         //soit deux plus petit que celle du modele
         let xScale = finalView.bounds.midX  / imageSize.width
         let yScale = finalView.bounds.midY / imageSize.height
+        
+        
+
        
         //détermination du minimum selon l'orientation
         let imagePortrait = imageSize.height > imageSize.width
@@ -521,8 +518,7 @@ class MainView: UIView {
     //calcule de le contentInset de la scrollview de sorte à ce que l'image ne s'écarte pas du modele
     func updateScrollViewContentInset(parentBounds : CGRect){
         
-        let currentImageOrientation = tiledImageView.frame.width > tiledImageView.frame.height ? UIPrintInfoOrientation.Landscape : .Portrait
-        let initImageOrientation = initResizedImageSize?.width > initResizedImageSize?.height ? UIPrintInfoOrientation.Landscape : .Portrait
+        
         
         var insetH = 0.5*(parentBounds.width + finalView.frame.width)
         var insetV = 0.5*(parentBounds.height + finalView.frame.height)
@@ -532,16 +528,16 @@ class MainView: UIView {
     
     
     
-    //fonction principale de mise de jour de la vue
-    func updateViewerLayout(parentBounds : CGRect, forSizeTransition : Bool){
+    //mise à jour du layout lors d'une rotation du device
+    func updateLayoutForSizeTransition(parentBounds : CGRect){
         
-        //initialisation de la vue
-        if !forSizeTransition && !isInterfaceLoaded{
-            
-            initAppInterface(parentBounds, cbk : nil)
-                        
-        }else if forSizeTransition { //mise à jour de l'interface suite à rotation du device
-            
+//        //initialisation de la vue
+//        if !forSizeTransition && !isInterfaceLoaded{
+//            
+//            initAppInterface(parentBounds)
+//                        
+//        }else if forSizeTransition { //mise à jour de l'interface suite à rotation du device
+        
             //permutation de la longueur et de la hauteur du modele afin que la zone cible reste fixe malgré la rotation
             let currentFinalViewWidth = finalWidth.constant
             finalWidth.constant = finalHeight.constant
@@ -556,27 +552,27 @@ class MainView: UIView {
             
             //repositionnement des lignes d'alignement si l'image est bloquée sinon on les supprime par défaut mais l'idéal
             //serait les supprimer seulement si la rotation a rompu l'alignement ce qui n'est pas systématique
-            if horizontalAlignmentEnabled{
+            if isImageLocked && horizontalAlignmentEnabled{
                 showAlignmentView(borderView, animated : false, alignmentType: targetAlignment[AlignmentAxis.horizontal]!, cbk : nil)
             }else{
                 verticalAlignmentView?.removeFromSuperview()
                 verticalAlignmentView = nil
             }
             
-            if verticalAlignmentEnabled{
+            if isImageLocked && verticalAlignmentEnabled{
                 showAlignmentView(borderView, animated : false, alignmentType: targetAlignment[AlignmentAxis.vertical]!, cbk : nil)
             }else{
                 horizontalAlignmentView?.removeFromSuperview()
                 horizontalAlignmentView = nil
             }
-        }
+//        }
     }
     
     
     //mise à jour du layout de la scrollview lorsque que device change d'orientation
     func adaptScrollViewLayoutForSizeTransition(parentBounds : CGRect){
     
-        let initMainSize = initResizedTargetSize?.width > initResizedTargetSize?.height ? CGSize(width: max(frame.width, frame.height), height: min(frame.width, frame.height)) : CGSize(width: min(frame.width, frame.height), height: max(frame.width, frame.height))
+        let initMainSize = resizedProjectSize?.width > resizedProjectSize?.height ? CGSize(width: max(frame.width, frame.height), height: min(frame.width, frame.height)) : CGSize(width: min(frame.width, frame.height), height: max(frame.width, frame.height))
         
         updateScrollViewContentInset(parentBounds)
         
@@ -624,7 +620,7 @@ class MainView: UIView {
                 
                 scrollViewWidth.constant = tiledImageView.frame.size.width
                 
-                if !verticalAlignmentEnabled{
+                if !isImageLocked || !verticalAlignmentEnabled{
                     scrollViewHeight.constant = parentBounds.height
                 }
             }
@@ -647,7 +643,7 @@ class MainView: UIView {
 
                 scrollViewHeight.constant = scrollView.contentSize.height
                 
-                if !horizontalAlignmentEnabled{
+                if !isImageLocked || !horizontalAlignmentEnabled{
                     scrollViewWidth.constant = parentBounds.width
                 }
             }

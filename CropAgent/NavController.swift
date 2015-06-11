@@ -39,15 +39,9 @@ class NavController: UINavigationController, UINavigationControllerDelegate{
             return nil
             
         }else if let asMainVC = viewControllers.last as? MainVC where asMainVC.appContextId == 0{
-            //fermeture du ContainerVC et retour au choix des formats
-        
-            //réinitialisation des données de session
-            asMainVC.sessionData!.scale = 1
-            asMainVC.sessionData!.rotationTransform = CGAffineTransformIdentity
-            asMainVC.sessionData!.imageRectInProjectRect = nil
+            //fermeture du MainVC et retour au choix des formats
             
             hidesBarsOnTap = false
-            
             controller = super.popViewControllerAnimated(true)
         
         }else{
@@ -78,15 +72,15 @@ class NavController: UINavigationController, UINavigationControllerDelegate{
         //mise à des données de format avt ouverture de ContainerVC
         if let asFormatTable = viewControllers.last as? FormatTableVC, let asMainVC = viewController as? MainVC{
             
-            var sessionData = SessionData.sharedData.getCopy()
-            var selectedItem = asFormatTable.tableView.indexPathForSelectedRow()
-            
-            if let itemIndexPath = selectedItem{
-                sessionData.projectFormat = asFormatTable.tableData[itemIndexPath.item]
-            }
-            
-            asMainVC.sessionData = sessionData
-            SessionData.setAppData(sessionData)
+//            var sessionData = SessionData.sharedData.getCopy()
+//            var selectedItem = asFormatTable.tableView.indexPathForSelectedRow()
+//            
+//            if let itemIndexPath = selectedItem{
+//                sessionData.projectFormat = asFormatTable.tableData[itemIndexPath.item]
+//            }
+//            
+//            asMainVC.sessionData = sessionData
+//            SessionData.setAppData(sessionData)
         }
         
         super.pushViewController(viewController, animated: tmpAninamed)

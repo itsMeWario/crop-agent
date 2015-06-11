@@ -45,19 +45,21 @@ class TiledImageView : UIImageView {
     
         if imageDef == .lowRes{
             lowResImage = image
+            self.image = image
+            
         }else{
             highResImage = image
-            sizeContent(image.size)
+            tiledView = TiledView(frame: CGRect(origin: CGPointZero, size: image.size), image: highResImage!)
+            addSubview(tiledView!)
+            
+            
+            
         }
     }
     
     
     func sizeContent(contentSize : CGSize){
-        
         frame.size = contentSize
-        image = lowResImage
-        tiledView = TiledView(frame: CGRect(origin: CGPointZero, size: contentSize), image: highResImage!)
-        addSubview(tiledView!)
         
     }
     
