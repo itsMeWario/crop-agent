@@ -8,6 +8,13 @@
 
 import UIKit
 
+var GlobalMainQueue: dispatch_queue_t {
+    return dispatch_get_main_queue()
+}
+var GlobalBackgroundQueue: dispatch_queue_t {
+    return dispatch_get_global_queue(Int(QOS_CLASS_BACKGROUND.value), 0)
+}
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 

@@ -10,23 +10,6 @@ import UIKit
 import Photos
 
 
-enum ImageAlignment : Int{
-    case leftAlignment = 0, topAlignment,
-    rightAlignment, bottomAlignment,
-    horizontalCenterAlignment, verticalCenterAlignment, none
-}
-
-enum AlignmentAxis : Int{
-    case horizontal = 0, vertical
-}
-
-enum ImageDefinition : Int{
-    case lowRes = 0, highRes
-}
-
-enum AspectSizeChange : Int{
-    case equalHeight = 0, equaWidth
-}
 
 
 class MainVC: UIViewController, UIScrollViewDelegate, UIGestureRecognizerDelegate, UINavigationBarDelegate {
