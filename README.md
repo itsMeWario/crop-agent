@@ -1,4 +1,4 @@
-# Crop Agent
+# Crop Agent (Swift 1.2)
 
 Crop Agent est une application iOS(8.0) universelle permettant de recadrer les images stockées dans "Photos". Les images éditées peuvent être imprimées ou simplement sauvegardées dans "Photos".
 Après avoir choisi la photo et un format de sortie, l'utilisateur peut edoter l'image en modifiant sa taille, sa position ou son orientation.
